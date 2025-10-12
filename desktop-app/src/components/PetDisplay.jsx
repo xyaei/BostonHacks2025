@@ -1,116 +1,114 @@
-import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
+// desktop-app/src/components/PetDisplay.jsx - CLICKABLE PET
 
-// Define the WebSocket server URL (Match this to Person 1's backend setup)
-const SOCKET_SERVER_URL = 'http://localhost:3001'; 
+import React, { useState, useEffect, useRef } from 'react';
 
-// Use this for a simple visual mapping (replace with actual image later)
-const getPetVisual = (mood) => {
-    switch (mood) {
-        case 'happy': return '😊';
-        case 'sad': return '😢';
-        case 'alert': return '🚨';
-        default: return '😐';
-    }
-};
+const WEBSOCKET_URL = 'ws://localhost:8000/ws';
 
-// Use this for a simple HealthBar color (replace with a dedicated component later)
-const getBarColor = (value) => {
-    if (value > 70) return 'bg-green-500';
-    if (value > 30) return 'bg-yellow-500';
-    return 'bg-red-500';
-};
-
-
-// 1. Create the main pet React component (and default export)
 export default function PetDisplay() {
-    
-    // 4. Set up local petState
-    const [petState, setPetState] = useState({
-        health: 100,
-        happiness: 100,
-        mood: 'happy',
-        stage: 'egg',
-        points: 0,
-    });
+  const [petState, setPetState] = useState({
+    health: 100,
+    evolution_stage: 1,
+    points: 0,
+    streak: 0,
+    state: 'happy',
+  });
+  const [isConnected, setIsConnected] = useState(false);
+  const wsRef = useRef(null);
 
-    // 2. Connect to the backend WebSocket & 3. Set up event listeners
-    useEffect(() => {
-        // Connect to the WebSocket server
-        const socket = io(SOCKET_SERVER_URL);
+  useEffect(() => {
+    const connectWebSocket = () => {
+      try {
+        const ws = new WebSocket(WEBSOCKET_URL);
+        wsRef.current = ws;
 
-        // 3. Set up event listeners: 'health_update' and 'threat_detected'
-        
-        // Listener for pet status updates
-        socket.on('health_update', (data) => {
-            console.log('Received health update:', data);
-            
-            // 4. Update the local petState
-            setPetState(prevState => ({
-                ...prevState,
-                health: data.health,
-                happiness: data.happiness,
-                points: data.points,
-                mood: data.mood,
-                stage: data.stage
-            }));
-        });
+        ws.onopen = () => {
+          console.log('✅ Pet WebSocket connected');
+          setIsConnected(true);
+        };
 
-        // Listener for threat detection
-        socket.on('threat_detected', (threatData) => {
-            console.warn('Threat Detected:', threatData);
-            
-            // Set pet mood to alert
-            setPetState(prevState => ({
-                ...prevState,
-                mood: 'alert'
-            }));
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
 
-            // 5. Call the popup function (via Electron IPC/Preload)
-            if (window.electron && window.electron.showIntervention) {
-                window.electron.showIntervention(threatData);
-            } else {
-                console.error("Electron IPC bridge not available.");
+            if (data.type === 'threat_detected') {
+              console.warn('🚨 THREAT - Auto-opening popup');
+
+              if (data.pet_state) {
+                setPetState(data.pet_state);
+              }
+
+              if (window.electron && window.electron.showIntervention) {
+                window.electron.showIntervention({
+                  type: data.threat.threat_type || 'Unknown Threat',
+                  details: data.threat.user_friendly_message || data.threat.explanation,
+                  severity: data.threat.confidence || 50,
+                  timestamp: new Date().toISOString(),
+                  petState: data.pet_state,
+                  isThreat: true
+                });
+              }
             }
-        });
+            else if (data.type === 'health_update') {
+              if (data.pet_state) {
+                setPetState(data.pet_state);
+              }
+            }
+          } catch (err) {
+            console.error('❌ Error:', err);
+          }
+        };
 
-        // Clean up connection when component unmounts
-        return () => socket.disconnect();
-    }, []); // Empty dependency array ensures this runs only once
+        ws.onerror = () => setIsConnected(false);
+        ws.onclose = () => {
+          setIsConnected(false);
+          setTimeout(connectWebSocket, 3000);
+        };
+      } catch (error) {
+        setIsConnected(false);
+      }
+    };
 
-    // 6. Integrate HealthBar and getPetImage (Basic UI structure)
-    return (
-        <div className="w-48 h-60 p-3 bg-gray-900/90 backdrop-blur-sm border border-green-500 rounded-lg shadow-xl flex flex-col items-center">
-            
-            <h2 className="text-sm text-green-500 font-semibold mb-1">CyberPet Guardian</h2>
-            <p className="text-xs text-gray-400">Score: {petState.points}</p>
+    connectWebSocket();
 
-            {/* Pet Visual */}
-            <div className={`text-6xl my-2 transition-transform duration-300 ${petState.mood === 'alert' ? 'animate-pulse' : ''}`}>
-                {getPetVisual(petState.mood)}
-            </div>
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+    };
+  }, []);
 
-            {/* Status Bars */}
-            <div className="w-full space-y-2 mt-2">
-                
-                {/* Health Bar */}
-                <div className="text-xs text-gray-300">Health ({petState.health}%)</div>
-                <div className="w-full h-2 bg-gray-700 rounded-full">
-                    <div 
-                        className={`h-2 rounded-full transition-all duration-500 ${getBarColor(petState.health)}`}
-                        style={{ width: `${petState.health}%` }}
-                    ></div>
-                </div>
+  const handleClick = () => {
+    console.log('🖱️ Pet clicked - Opening stats popup');
+    if (window.electron && window.electron.showIntervention) {
+      window.electron.showIntervention({
+        type: null,
+        details: null,
+        severity: 0,
+        timestamp: new Date().toISOString(),
+        petState: petState,
+        isThreat: false
+      });
+    }
+  };
 
-                {/* Happiness Bar (Example) */}
-                <div className="text-xs text-gray-300">Happiness ({petState.happiness}%)</div>
-                <div className="w-full h-2 bg-gray-700 rounded-full">
-                    <div 
-                        className={`h-2 rounded-full transition-all duration-500 ${getBarColor(petState.happiness)}`}
-                        style={{ width: `${petState.happiness}%` }}
-                    ></div>
-                </div>
-            </div>
+  const getPetAnimation = () => {
+    if (petState.state === 'critical' || petState.state === 'alert') {
+      return 'animate-pulse';
+    }
+    return '';
+  };
+
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <div
+        onClick={handleClick}
+        className={`w-40 h-40 bg-white rounded-lg shadow-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform ${getPetAnimation()}`}
+        style={{
+          border: isConnected ? '3px solid #00ff00' : '3px solid #ff0000'
+        }}
+      >
+        <div className="text-6xl select-none">
+          {petState.state === 'alert' || petState.state === 'critical' ? '😱' : '😊'}
         </div>
-    );
+      </div>
+    </div>
+  );
 }

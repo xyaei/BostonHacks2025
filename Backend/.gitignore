@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+.env
+pet_state.json
+last_screenshot.png
+*.log
+.DS_Store.DS_Store

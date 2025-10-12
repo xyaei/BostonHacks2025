@@ -1,14 +1,30 @@
+<!-- desktop-app/pet.html -->
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
-    <title>CyberPet Widget</title>
-    <link rel="stylesheet" href="dist/tailwind.css">
-    <style>body { background-color: transparent; }</style>
+    <title>CyberPet</title>
+    <link rel="stylesheet" href="dist/components/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: transparent;
+        }
+
+        #root {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
+
 <body>
     <div id="root"></div>
     <script src="dist/petRenderer.js"></script>
 </body>
+
 </html>

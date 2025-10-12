@@ -1,54 +1,19 @@
-function createPetWindow() {
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    
-    petWindow = new BrowserWindow({
-        width: 200,
-        height: 250,
-        // Position in the bottom-right corner, adjusted for size
-        x: width - 270, 
-        y: height - 320,
+📝 QUICK REFERENCE: All Commands
+To Start Everything (after initial setup):
 
-        frame: false,             // No native title bar
-        transparent: true,        // Allows custom shapes/transparency
-        alwaysOnTop: true,        // Keeps it above other apps
-        skipTaskbar: true,        // Hides it from the taskbar/dock
-        resizable: false,
-        webPreferences: {
-            // Must use a preload script for safe IPC between main and renderer
-            preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true // Security best practice
-        }
-    });
+Terminal 1 - Backend:
+bashcd backend
+source venv/bin/activate
+python -m uvicorn main:app --reload --port 8000
 
-    // Load the HTML file that will host the PetDisplay React component
-    petWindow.loadFile('pet.html'); 
+Terminal 2 - CSS Build:
+bashcd desktop-app
+npx tailwindcss -i ./src/index.css -o ./dist/components/index.css --watch
 
-    petWindow.show();  // Forces the window to display
-    petWindow.focus(); // Forces the window to grab focus
-    
-    // CRUCIAL: Allows mouse clicks to pass through the transparent part of the window
-    petWindow.setIgnoreMouseEvents(true, { forward: true }); 
+Terminal 3 - JS Build:
+bashcd desktop-app
+npx babel src --out-dir dist --extensions .jsx,.js --watch
 
-
-    function createPetWindow() {
-    petWindow = new BrowserWindow({
-        width: 300,  // Bigger and easier to see
-        height: 350, // Bigger and easier to see
-        
-        center: true, // Guarantees on-screen position
-        
-        frame: false,       // <--- CHANGE: Standard title bar and border
-        transparent: true, // <--- CHANGE: Standard white background (overrides PetDisplay's color)
-        
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true 
-        }
-    });
-    
-    
-    petWindow.setIgnoreMouseEvents(true, { forward: true }); 
-
-    
-    petWindow.loadFile('pet.html'); 
-}
+Terminal 4 - Electron App:
+bashcd desktop-app
+npm start

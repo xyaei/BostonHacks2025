@@ -1,33 +1,38 @@
 {
-  "name": "desktop-app",
+  "name": "cyberpet-guardian",
   "version": "1.0.0",
-  "description": "CyberPet Guardian Frontend (Electron/React)",
+  "description": "CyberPet Guardian - Retro Security Pet",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:css": "./node_modules/.bin/tailwindcss -i ./src/index.css -o ./dist/tailwind.css --watch",
-    "build:js": "npx babel src --out-dir dist --extensions .jsx,.js --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:css": "tailwindcss -i ./src/index.css -o ./dist/components/index.css",
+    "build:pet": "esbuild src/petRenderer.jsx --bundle --outfile=dist/petRenderer.js --platform=browser --format=iife --external:electron",
+    "build:popup": "esbuild src/popupRenderer.jsx --bundle --outfile=dist/popupRenderer.js --platform=browser --format=iife --external:electron",
+    "build:js": "npm run build:pet && npm run build:popup",
+    "build": "npm run build:css && npm run build:js",
+    "watch:css": "tailwindcss -i ./src/index.css -o ./dist/components/index.css --watch",
+    "watch:pet": "esbuild src/petRenderer.jsx --bundle --outfile=dist/petRenderer.js --platform=browser --format=iife --external:electron --watch",
+    "watch:popup": "esbuild src/popupRenderer.jsx --bundle --outfile=dist/popupRenderer.js --platform=browser --format=iife --external:electron --watch",
+    "dev": "npm run build && npm run start"
   },
   "keywords": [
     "electron",
     "react",
-    "security"
+    "security",
+    "cybersecurity",
+    "hackathon"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Your Team",
+  "license": "MIT",
   "dependencies": {
-    "autoprefixer": "^10.4.19",
-    "electron": "^27.0.0",
+    "electron": "^38.2.2",
     "howler": "^2.2.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "socket.io-client": "^4.5.4",
-    "tailwindcss": "^3.4.4"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.24.8",
-    "@babel/core": "^7.24.9",
-    "@babel/preset-react": "^7.24.7"
+    "autoprefixer": "^10.4.19",
+    "esbuild": "^0.25.10",
+    "tailwindcss": "^3.4.4"
   }
 }

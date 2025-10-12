@@ -1,0 +1,638 @@
+<!-- backend/backend_debug.html -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CyberPet Backend - Debug Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #0a0e27;
+            color: #00ff00;
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        .header {
+            background: #1a1f3a;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+
+        h1 {
+            color: #00ff00;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .status-item {
+            background: #0a0e27;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #00ff00;
+        }
+
+        .status-item.active {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        .status-item.inactive {
+            border-color: #666;
+            color: #666;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: #1a1f3a;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .panel-title {
+            color: #00ffff;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 5px;
+        }
+
+        .panel-full {
+            grid-column: 1 / -1;
+        }
+
+        .json-view {
+            background: #0a0e27;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-container {
+            background: #0a0e27;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #1a1f3a;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-entry.error {
+            color: #ff4444;
+        }
+
+        .log-entry.warning {
+            color: #ffaa00;
+        }
+
+        .log-entry.success {
+            color: #00ff00;
+        }
+
+        .log-entry.info {
+            color: #00ffff;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dotted #333;
+        }
+
+        .metric-label {
+            color: #888;
+        }
+
+        .metric-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .event-item {
+            background: #0a0e27;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid #ff4444;
+            border-radius: 3px;
+        }
+
+        .event-item.threat {
+            border-left-color: #ff4444;
+        }
+
+        .event-item.safe {
+            border-left-color: #00ff00;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 10px;
+        }
+
+        .controls {
+            background: #1a1f3a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #00ff00;
+            color: #0a0e27;
+            border: none;
+            padding: 10px 20px;
+            margin-right: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00ffff;
+        }
+
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .websocket-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff0000;
+            margin-right: 5px;
+            animation: blink 1s infinite;
+        }
+
+        .websocket-status.connected {
+            background: #00ff00;
+            animation: none;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #0a0e27;
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #00ff00;
+            color: #00ffff;
+        }
+
+        .table td {
+            padding: 8px;
+            border-bottom: 1px solid #1a1f3a;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .badge.success {
+            background: #00ff00;
+            color: #0a0e27;
+        }
+
+        .badge.error {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .badge.warning {
+            background: #ffaa00;
+            color: #0a0e27;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🛡️ CYBERPET BACKEND - DEBUG DASHBOARD</h1>
+        <div class="status-bar">
+            <div class="status-item" id="server-status">
+                <span class="websocket-status" id="ws-indicator"></span>
+                SERVER: <span id="server-text">CHECKING...</span>
+            </div>
+            <div class="status-item" id="monitoring-status">
+                MONITORING: <span id="monitoring-text">OFFLINE</span>
+            </div>
+            <div class="status-item">
+                UPTIME: <span id="uptime">00:00:00</span>
+            </div>
+            <div class="status-item">
+                LAST UPDATE: <span id="last-update">Never</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="startMonitoring()">▶️ START MONITORING</button>
+        <button onclick="stopMonitoring()">⏹️ STOP MONITORING</button>
+        <button onclick="triggerScreenshot()">📸 MANUAL SCREENSHOT</button>
+        <button onclick="triggerFakeThreat()">⚠️ TRIGGER FAKE THREAT</button>
+        <button onclick="resetPet()">🔄 RESET PET</button>
+        <button onclick="clearLogs()">🗑️ CLEAR LOGS</button>
+    </div>
+
+    <div class="grid">
+        <!-- Pet State -->
+        <div class="panel">
+            <div class="panel-title">🐾 PET STATE (LIVE)</div>
+            <div class="metric">
+                <span class="metric-label">Health:</span>
+                <span class="metric-value" id="pet-health">100</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Evolution Stage:</span>
+                <span class="metric-value" id="pet-stage">1</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Points:</span>
+                <span class="metric-value" id="pet-points">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Streak:</span>
+                <span class="metric-value" id="pet-streak">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">State:</span>
+                <span class="metric-value" id="pet-state">happy</span>
+            </div>
+        </div>
+
+        <!-- System Metrics -->
+        <div class="panel">
+            <div class="panel-title">📊 SYSTEM METRICS</div>
+            <div class="metric">
+                <span class="metric-label">Total API Calls:</span>
+                <span class="metric-value" id="api-calls">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Threats Detected:</span>
+                <span class="metric-value" id="threats-total">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Safe Checks:</span>
+                <span class="metric-value" id="safe-checks">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">WebSocket Clients:</span>
+                <span class="metric-value" id="ws-clients">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Monitoring Interval:</span>
+                <span class="metric-value" id="interval">30s</span>
+            </div>
+        </div>
+
+        <!-- Latest Screenshot Info -->
+        <div class="panel">
+            <div class="panel-title">📸 LATEST SCREENSHOT</div>
+            <div class="metric">
+                <span class="metric-label">Timestamp:</span>
+                <span class="metric-value" id="screenshot-time">N/A</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Analysis Result:</span>
+                <span class="metric-value" id="screenshot-result">N/A</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Threat Type:</span>
+                <span class="metric-value" id="threat-type">None</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Confidence:</span>
+                <span class="metric-value" id="confidence">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Events -->
+    <div class="panel panel-full">
+        <div class="panel-title">📋 RECENT EVENTS (Last 10)</div>
+        <div id="events-container">
+            <p style="color: #666; text-align: center; padding: 20px;">No events yet...</p>
+        </div>
+    </div>
+
+    <!-- Live Logs -->
+    <div class="panel panel-full">
+        <div class="panel-title">📝 LIVE BACKEND LOGS</div>
+        <div class="log-container" id="log-container">
+            <div class="log-entry info">[SYSTEM] Dashboard connected. Waiting for events...</div>
+        </div>
+    </div>
+
+    <!-- Raw Pet State JSON -->
+    <div class="panel panel-full">
+        <div class="panel-title">🔧 RAW PET STATE (JSON)</div>
+        <div class="json-view">
+            <pre id="raw-json">{}</pre>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let logs = [];
+        let apiCalls = 0;
+        let threatsDetected = 0;
+        let safeChecks = 0;
+        let startTime = Date.now();
+
+        // Connect to WebSocket
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8000/ws');
+
+            ws.onopen = () => {
+                log('WebSocket connected', 'success');
+                document.getElementById('ws-indicator').classList.add('connected');
+                document.getElementById('server-text').textContent = 'ONLINE';
+                document.getElementById('server-status').classList.add('active');
+            };
+
+            ws.onclose = () => {
+                log('WebSocket disconnected', 'error');
+                document.getElementById('ws-indicator').classList.remove('connected');
+                document.getElementById('server-text').textContent = 'OFFLINE';
+                document.getElementById('server-status').classList.remove('active');
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                log('WebSocket error: ' + error, 'error');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            log('WebSocket message received: ' + data.type, 'info');
+
+            if (data.type === 'threat_detected') {
+                threatsDetected++;
+                document.getElementById('threats-total').textContent = threatsDetected;
+
+                log('⚠️ THREAT DETECTED: ' + data.threat.threat_type, 'error');
+                log('Confidence: ' + data.threat.confidence + '%', 'warning');
+                log('Explanation: ' + data.threat.explanation, 'info');
+
+                addEvent(data, 'threat');
+                updatePetState(data.pet_state);
+                updateScreenshotInfo(data.threat);
+
+            } else if (data.type === 'health_update') {
+                safeChecks++;
+                document.getElementById('safe-checks').textContent = safeChecks;
+                updatePetState(data.pet_state);
+            }
+
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+
+        function updatePetState(state) {
+            document.getElementById('pet-health').textContent = state.health;
+            document.getElementById('pet-stage').textContent = state.evolution_stage;
+            document.getElementById('pet-points').textContent = state.points;
+            document.getElementById('pet-streak').textContent = state.streak;
+            document.getElementById('pet-state').textContent = state.state;
+
+            document.getElementById('raw-json').textContent = JSON.stringify(state, null, 2);
+        }
+
+        function updateScreenshotInfo(threat) {
+            document.getElementById('screenshot-time').textContent = new Date().toLocaleTimeString();
+            document.getElementById('screenshot-result').textContent = threat.threat_detected ? 'THREAT' : 'SAFE';
+            document.getElementById('threat-type').textContent = threat.threat_type || 'None';
+            document.getElementById('confidence').textContent = threat.confidence + '%';
+        }
+
+        function addEvent(data, type) {
+            const container = document.getElementById('events-container');
+
+            if (container.children[0]?.tagName === 'P') {
+                container.innerHTML = '';
+            }
+
+            const event = document.createElement('div');
+            event.className = 'event-item ' + type;
+            event.innerHTML = `
+                <div class="timestamp">${new Date().toLocaleString()}</div>
+                <div><strong>Type:</strong> ${data.threat?.threat_type || 'health_update'}</div>
+                <div><strong>Message:</strong> ${data.threat?.user_friendly_message || 'Pet health updated'}</div>
+                <div><strong>Confidence:</strong> ${data.threat?.confidence || 0}%</div>
+                <div><strong>Pet Health:</strong> ${data.pet_state.health}</div>
+            `;
+
+            container.insertBefore(event, container.firstChild);
+
+            while (container.children.length > 10) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            logs.push({ time: Date.now(), message, type });
+
+            if (logs.length > 100) {
+                logs.shift();
+            }
+        }
+
+        async function startMonitoring() {
+            log('Starting monitoring...', 'info');
+            try {
+                const response = await fetch('http://localhost:8000/api/monitoring/start', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                log('Monitoring started: ' + data.message, 'success');
+                updateMonitoringStatus();
+            } catch (e) {
+                log('Failed to start monitoring: ' + e, 'error');
+            }
+        }
+
+        async function stopMonitoring() {
+            log('Stopping monitoring...', 'info');
+            try {
+                const response = await fetch('http://localhost:8000/api/monitoring/stop', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                log('Monitoring stopped', 'warning');
+                updateMonitoringStatus();
+            } catch (e) {
+                log('Failed to stop monitoring: ' + e, 'error');
+            }
+        }
+
+        async function triggerScreenshot() {
+            log('Triggering manual screenshot...', 'info');
+            apiCalls++;
+            document.getElementById('api-calls').textContent = apiCalls;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/test/screenshot', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                log('Screenshot analysis complete', 'success');
+                log('Result: ' + (data.threat_detected ? 'THREAT' : 'SAFE'), data.threat_detected ? 'error' : 'success');
+            } catch (e) {
+                log('Screenshot failed: ' + e, 'error');
+            }
+        }
+
+        async function triggerFakeThreat() {
+            log('Triggering fake threat for testing...', 'warning');
+            apiCalls++;
+            document.getElementById('api-calls').textContent = apiCalls;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/test/trigger-threat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ severity: 85, threat_type: 'test_phishing' })
+                });
+                const data = await response.json();
+                log('Fake threat triggered successfully', 'success');
+            } catch (e) {
+                log('Failed to trigger threat: ' + e, 'error');
+            }
+        }
+
+        async function resetPet() {
+            log('Resetting pet to full health...', 'info');
+            // You'll need to add this endpoint to main.py
+            try {
+                const response = await fetch('http://localhost:8000/api/demo/reset-pet', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                log('Pet reset complete', 'success');
+                updatePetState(data.pet_state);
+            } catch (e) {
+                log('Reset failed (endpoint may not exist yet): ' + e, 'warning');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('log-container').innerHTML = '';
+            logs = [];
+            log('Logs cleared', 'info');
+        }
+
+        async function updateMonitoringStatus() {
+            try {
+                const response = await fetch('http://localhost:8000/api/monitoring/status');
+                const data = await response.json();
+
+                const statusEl = document.getElementById('monitoring-status');
+                const textEl = document.getElementById('monitoring-text');
+
+                if (data.monitoring_active) {
+                    textEl.textContent = '🟢 ACTIVE';
+                    statusEl.classList.add('active');
+                } else {
+                    textEl.textContent = '⚫ OFFLINE';
+                    statusEl.classList.remove('active');
+                }
+
+                document.getElementById('interval').textContent = data.screenshot_interval + 's';
+                updatePetState(data.pet_state);
+
+            } catch (e) {
+                log('Status update failed: ' + e, 'error');
+            }
+        }
+
+        function updateUptime() {
+            const elapsed = Date.now() - startTime;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+
+            document.getElementById('uptime').textContent =
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Initialize
+        connectWebSocket();
+        updateMonitoringStatus();
+        setInterval(updateMonitoringStatus, 5000);
+        setInterval(updateUptime, 1000);
+
+        log('Dashboard initialized', 'success');
+        log('WebSocket connecting to ws://localhost:8000/ws', 'info');
+    </script>
+</body>
+
+</html>
