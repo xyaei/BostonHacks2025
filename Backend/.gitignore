@@ -1,1 +1,10 @@
 .DS_StoreBackend/.DS_Store
+# Python
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+
+# macOS junk
+.DS_Store
