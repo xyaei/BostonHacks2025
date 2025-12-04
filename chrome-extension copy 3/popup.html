@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="config.js"></script>
+    <script src="gemini.js"></script>
+    <script src="popup.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberPet Guardian</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #0a192f;
+            background: linear-gradient(135deg, #0a192f 0%, #1e3a5f 100%);
+            color: #e6f1ff;
+            width: 440px;
+            height: 820px;
+            padding: 12px;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0 12px 0;
+            border-bottom: 1px solid #3a506b;
+            margin-bottom: 12px;
+        }
+        
+        .logo {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+        
+        .logo-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: url('assets/icon-48.png') center/contain no-repeat;
+            border-radius: 8px;
+        }
+        
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #7b68ee, #9370db);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tagline {
+            font-size: 10px;
+            color: #b19cd9;
+            margin-left: 40px;
+        }
+
+        .protection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #7b68ee;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #7b68ee;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .dashboard::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .dashboard::-webkit-scrollbar-track {
+            background: rgba(58, 80, 107, 0.3);
+            border-radius: 8px;
+        }
+
+        .dashboard::-webkit-scrollbar-thumb {
+            background: #7b68ee;
+            border-radius: 8px;
+        }
+        
+        .pet-section {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.9), rgba(42, 67, 101, 0.8));
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #7b68ee;
+            min-height: 260px;
+        }
+        
+        .pet-container {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 4px 0;
+        }
+        
+        .cyber-pet {
+            width: 100%;
+            height: 100%;
+            background: url('assets/bgicon.png') center/contain no-repeat;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            transition: all 0.3s ease;
+        }
+
+        .cyber-pet.tired {
+            filter: sepia(1) saturate(2) hue-rotate(-10deg);
+        }
+
+        .cyber-pet.very-tired {
+            filter: sepia(1) saturate(3) hue-rotate(-30deg);
+            animation: pulse-tired 2s infinite;
+        }
+
+        @keyframes pulse-tired {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .pet-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 4px 0 8px 0;
+            background: linear-gradient(90deg, #7b68ee, #9370db);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .pet-status {
+            color: #7b68ee;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .health-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 85%;
+        }
+        
+        .health-bar {
+            flex: 1;
+            height: 10px;
+            background: rgba(58, 80, 107, 0.6);
+            border-radius: 5px;
+            margin: 4px 0;
+            overflow: hidden;
+            border: 1px solid #7b68ee;
+        }
+        
+        .health-fill {
+            height: 100%;
+            width: 85%;
+            background: linear-gradient(90deg, #7b68ee, #9370db);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        .health-text {
+            font-size: 10px;
+            color: #b19cd9;
+            min-width: 50px;
+        }
+
+        .hp-change {
+            position: absolute;
+            right: -30px;
+            font-size: 12px;
+            font-weight: bold;
+            animation: floatUp 1s ease-out;
+            pointer-events: none;
+        }
+
+        .hp-positive { color: #7b68ee; }
+        .hp-negative { color: #ff6b6b; }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-20px); opacity: 0; }
+        }
+        
+        .security-section {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.9), rgba(42, 67, 101, 0.8));
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid #7b68ee;
+        }
+        
+        .security-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        
+        .security-title h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #e6f1ff;
+        }
+        
+        .security-icon {
+            width: 22px;
+            height: 22px;
+            background: url('assets/shield.png') center/contain no-repeat;
+        }
+        
+        .security-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        
+        .security-item {
+            background: linear-gradient(135deg, rgba(58, 80, 107, 0.7), rgba(42, 67, 101, 0.8));
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.15s ease;
+            border: 1px solid #7b68ee;
+            cursor: pointer;
+        }
+        
+        .security-item:hover {
+            border-color: #9370db;
+            transform: translateY(-2px);
+        }
+        
+        .security-value {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 2px 0 1px 0;
+            color: #e6f1ff;
+        }
+        
+        .security-label {
+            font-size: 9px;
+            color: #b19cd9;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .security-subtext {
+            font-size: 8px;
+            color: #a8b2d1;
+            margin-top: 1px;
+        }
+
+        .security-item.safe { border-color: #7b68ee; }
+        .security-item.warning { border-color: #ffb74d; }
+        .security-item.danger { border-color: #ff6b6b; }
+        
+        .activity-section {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.9), rgba(42, 67, 101, 0.8));
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid #7b68ee;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        
+        .activity-header h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #e6f1ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .monitor-icon {
+            width: 20px;
+            height: 20px;
+            background: url('assets/check-icon.png') center/contain no-repeat;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #7b68ee, #9370db);
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(123, 104, 238, 0.7);
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #9370db, #8a2be2);
+        }
+
+        .btn-scan {
+            background: linear-gradient(135deg, #9477ec, #9976de);
+        }
+
+        .btn-test {
+            background: linear-gradient(135deg, #4c5eaf, #6376cd);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #7573f7, #706ece);
+        }
+        
+        .threat-feed {
+            background: rgba(42, 67, 101, 0.6);
+            border-radius: 10px;
+            padding: 14px;
+            border: 1px solid #7b68ee;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .threat-feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #7b68ee;
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background: #7b68ee;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .threat-list {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #7b68ee;
+            border-radius: 6px;
+            padding: 10px;
+            flex: 1;
+        }
+
+        .threat-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .threat-list::-webkit-scrollbar-track {
+            background: rgba(58, 80, 107, 0.2);
+            border-radius: 6px;
+        }
+
+        .threat-list::-webkit-scrollbar-thumb {
+            background: #7b68ee;
+            border-radius: 6px;
+        }
+        
+        .threat-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 12px 10px;
+            font-size: 11px;
+            border-bottom: 1px solid #3a506b;
+            transition: all 0.1s ease;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .threat-item:hover {
+            background: rgba(123, 104, 238, 0.15);
+        }
+        
+        .threat-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        
+        .threat-icon.safe { background: #7b68ee; }
+        .threat-icon.warning { background: #ffb74d; }
+        .threat-icon.danger { background: #ff6b6b; animation: pulse 1.5s infinite; }
+        
+        .threat-content {
+            flex: 1;
+        }
+        
+        .threat-text {
+            color: #e6f1ff;
+            font-size: 11px;
+            line-height: 1.3;
+            margin-bottom: 2px;
+        }
+
+        .threat-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 9px;
+            color: #8892b0;
+        }
+
+        .threat-source {
+            font-weight: 600;
+            color: #7b68ee;
+        }
+
+        .threat-time {
+            color: #8892b0;
+            font-size: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 25, 47, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.95), rgba(42, 67, 101, 0.95));
+            border-radius: 14px;
+            padding: 20px;
+            border: 2px solid #7b68ee;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            max-width: 380px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #7b68ee;
+            padding-right: 30px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e6f1ff;
+        }
+
+        .modal-body {
+            font-size: 12px;
+            line-height: 1.4;
+            color: #a8b2d1;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(58, 80, 107, 0.3);
+            border-radius: 6px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #7b68ee;
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            color: #e6f1ff;
+            font-size: 11px;
+        }
+
+        .tracker-item, .password-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px;
+            border-bottom: 1px solid #3a506b;
+            font-size: 12px;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tracker-item:last-child, .password-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .item-name {
+            color: #e6f1ff;
+            font-weight: 600;
+        }
+
+        .item-status {
+            color: #7b68ee;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .item-url {
+            color: #b19cd9;
+            font-size: 10px;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .password-input, .url-input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #7b68ee;
+            border-radius: 6px;
+            background: rgba(58, 80, 107, 0.6);
+            color: white;
+            font-size: 12px;
+        }
+
+        .password-input:focus, .url-input:focus {
+            outline: none;
+            border-color: #9370db;
+        }
+
+        .results-section {
+            background: rgba(58, 80, 107, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .strength-meter {
+            height: 6px;
+            background: #3a506b;
+            border-radius: 3px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .tips-section {
+            background: rgba(123, 104, 238, 0.1);
+            border: 1px solid #7b68ee;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .tips-section h4 {
+            color: #7b68ee;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .tips-section ul {
+            margin: 0;
+            padding-left: 16px;
+            font-size: 11px;
+            color: #e6f1ff;
+        }
+
+        .tips-section li {
+            margin-bottom: 4px;
+        }
+
+        .warning-section {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .warning-section h4 {
+            color: #ff6b6b;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .success-section {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .success-section h4 {
+            color: #4caf50;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-main">
+                    <div class="logo-icon"></div>
+                    <div class="logo-text">CyberPet</div>
+                </div>
+                <div class="tagline">Your Cyber Companion</div>
+            </div>
+            <div class="protection-status">
+                <div class="status-dot"></div>
+                <span>ACTIVE</span>
+            </div>
+        </header>
+        
+        <div class="dashboard">
+            <div class="pet-section">
+                <div class="pet-container">
+                    <div class="cyber-pet" id="cyberPet"></div>
+                    <div class="hp-change" id="hpChange" style="display: none;"></div>
+                </div>
+                <div class="pet-name">Byte</div>
+                <div class="pet-status" id="petStatus">All systems operational</div>
+                <div class="health-container">
+                    <div class="health-bar">
+                        <div class="health-fill" id="healthFill" style="width: 85%"></div>
+                    </div>
+                    <div class="health-text" id="healthText">85 / 100 HP</div>
+                </div>
+            </div>
+            
+            <div class="security-section">
+                <div class="security-title">
+                    <div class="security-icon"></div>
+                    <h2>Real-Time Protection</h2>
+                </div>
+                
+                <div class="security-grid">
+                    <div class="security-item safe" id="pageSafetyItem">
+                        <div class="security-value" id="pageSafetyValue">Safe</div>
+                        <div class="security-label">CURRENT PAGE</div>
+                        <div class="security-subtext" id="pageSafetySubtext">Loading...</div>
+                    </div>
+                    
+                    <div class="security-item safe" id="trackersItem">
+                        <div class="security-value" id="trackersValue">0</div>
+                        <div class="security-label">TRACKERS BLOCKED</div>
+                        <div class="security-subtext" id="trackersSubtext">Live protection</div>
+                    </div>
+                    
+                    <div class="security-item safe" id="urlAnalyzerItem">
+                        <div class="security-value" id="urlAnalyzerValue">🔍</div>
+                        <div class="security-label">URL CHECK</div>
+                        <div class="security-subtext">Analyze suspicious links</div>
+                    </div>
+                    
+                    <div class="security-item safe" id="passwordTesterItem">
+                        <div class="security-value" id="passwordTesterValue">🔒</div>
+                        <div class="security-label">PASSWORD TEST</div>
+                        <div class="security-subtext">Check strength & breaches</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-scan" id="scanBtn">Quick Scan</button>
+                    <button class="btn btn-clear" id="privacyCleanBtn">Privacy Clean</button>
+                    <button class="btn btn-test" id="simulateTrackerBtn">Test Trackers</button>
+                </div>
+            </div>
+            
+            <div class="activity-section">
+                <div class="activity-header">
+                    <h2>
+                        <div class="monitor-icon"></div>
+                        Security Monitor
+                    </h2>
+                    <div class="status-indicator active">
+                        <div class="pulse-dot"></div>
+                        <span>Live</span>
+                    </div>
+                </div>
+                
+                <div class="threat-feed">
+                    <div class="threat-list" id="threatList">
+                        <div class="threat-item">
+                            <div class="threat-icon safe"></div>
+                            <div class="threat-content">
+                                <div class="threat-text">Monitoring initialized</div>
+                                <div class="threat-details">
+                                    <span class="threat-source">System</span>
+                                    <span class="threat-time">Just now</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trackers Modal -->
+    <div class="modal" id="trackersModal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="trackersModalClose">×</button>
+            <div class="modal-header">
+                <div class="threat-icon safe"></div>
+                <div class="modal-title">Trackers Blocked</div>
+            </div>
+            <div class="modal-body">
+                <div class="info-item">
+                    <div class="info-label">TOTAL BLOCKED</div>
+                    <div class="info-value" id="totalTrackersBlocked">0 trackers</div>
+                </div>
+                <div class="trackers-list" id="trackersList">
+                    <div class="tracker-item">
+                        <div class="item-header">
+                            <span class="item-name">No trackers blocked yet</span>
+                            <span class="item-status">Waiting</span>
+                        </div>
+                        <div class="item-url">Trackers will appear here as they are blocked</div>
+                    </div>
+                </div>
+                <div class="tips-section">
+                    <h4>PRIVACY PROTECTION</h4>
+                    <div>CyberPet automatically blocks tracking scripts that monitor your browsing activity, preventing companies from collecting your personal data without permission.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Tester Modal -->
+    <div class="modal" id="passwordTesterModal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="passwordTesterModalClose">×</button>
+            <div class="modal-header">
+                <div class="threat-icon safe"></div>
+                <div class="modal-title">Password Strength Tester</div>
+            </div>
+            <div class="modal-body">
+                <div class="info-item">
+                    <div class="info-label">CHECK PASSWORD SECURITY</div>
+                    <input type="password" id="passwordInput" class="password-input" placeholder="Enter password to test security">
+                    <button id="testPasswordBtn" class="btn" style="width: 100%; margin: 8px 0;">Test Password Security</button>
+                </div>
+                
+                <div id="passwordResults" class="results-section" style="display: none;">
+                    <div class="info-item">
+                        <div class="info-label">STRENGTH</div>
+                        <div class="info-value" id="passwordStrength">-</div>
+                        <div class="strength-meter">
+                            <div class="strength-fill" id="strengthMeter" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">DATA BREACHES</div>
+                        <div class="info-value" id="passwordBreaches">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">ENTROPY SCORE</div>
+                        <div class="info-value" id="passwordEntropy">- bits</div>
+                    </div>
+                    
+                    <div id="passwordFeedback" class="tips-section">
+                        <h4>SECURITY RECOMMENDATIONS</h4>
+                        <ul id="feedbackList"></ul>
+                    </div>
+                </div>
+                
+                <div class="tips-section">
+                    <h4>PASSWORD SECURITY TIPS</h4>
+                    <ul>
+                        <li>Use at least 12 characters with mix of letters, numbers & symbols</li>
+                        <li>Avoid common words, phrases, or personal information</li>
+                        <li>Use unique passwords for different accounts</li>
+                        <li>Consider using a password manager</li>
+                        <li>Enable two-factor authentication when available</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- URL Analyzer Modal -->
+    <div class="modal" id="urlAnalyzerModal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="urlAnalyzerModalClose">×</button>
+            <div class="modal-header">
+                <div class="threat-icon safe"></div>
+                <div class="modal-title">URL Safety Check</div>
+            </div>
+            <div class="modal-body">
+                <div class="info-item">
+                    <div class="info-label">CHECK URL SAFETY</div>
+                    <input type="text" id="urlInput" class="url-input" placeholder="https://example.com" style="margin-bottom: 10px;">
+                    <button id="analyzeUrlBtn" class="btn" style="width: 100%;">Analyze URL Safety</button>
+                </div>
+                
+                <div id="urlResults" class="results-section" style="display: none;">
+                    <div class="info-item">
+                        <div class="info-label">SAFETY STATUS</div>
+                        <div class="info-value" id="urlSafetyStatus">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">THREATS DETECTED</div>
+                        <div class="info-value" id="urlThreats">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">CONFIDENCE</div>
+                        <div class="info-value" id="urlConfidence">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">ADDITIONAL INFO</div>
+                        <div class="info-value" id="urlAdditionalInfo">-</div>
+                    </div>
+                    
+                    <div id="urlRecommendations" class="tips-section">
+                        <h4>RECOMMENDATION</h4>
+                        <div id="urlRecommendationText">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cookie Manager Modal -->
+    <div class="modal" id="cookieManagerModal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="cookieManagerModalClose">×</button>
+            <div class="modal-header">
+                <div class="threat-icon safe"></div>
+                <div class="modal-title">Privacy Cleaner</div>
+            </div>
+            <div class="modal-body">
+                <div class="info-item">
+                    <div class="info-label">CLEAR TRACKING DATA</div>
+                    <div class="info-value">Remove tracking cookies and site data</div>
+                </div>
+                
+                <div class="warning-section">
+                    <h4>⚠️ WARNING</h4>
+                    <div>This will log you out of some websites and clear site preferences.</div>
+                </div>
+                
+                <button id="clearCookiesBtn" class="btn btn-clear" style="width: 100%; margin: 15px 0;">
+                    🍪 Clear Tracking Cookies
+                </button>
+                
+                <div id="cookieResults" style="display: none;">
+                    <div class="info-item" style="background: rgba(123, 104, 238, 0.2);">
+                        <div class="info-label">CLEANUP COMPLETE</div>
+                        <div class="info-value" id="cookiesCleared">0 tracking cookies cleared</div>
+                    </div>
+                </div>
+                
+                <div class="tips-section">
+                    <h4>PRIVACY PROTECTION</h4>
+                    <ul>
+                        <li>Removes tracking cookies that follow you across sites</li>
+                        <li>Clears localStorage and sessionStorage from trackers</li>
+                        <li>Protects against fingerprinting attempts</li>
+                        <li>May log you out of some websites</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Threat Details Modal -->
+    <div class="modal" id="threatModal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="threatModalClose">×</button>
+            <div class="modal-header">
+                <div class="threat-icon safe" id="modalThreatIcon"></div>
+                <div class="modal-title" id="modalThreatTitle">Threat Details</div>
+            </div>
+            <div class="modal-body" id="threatModalBody">
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

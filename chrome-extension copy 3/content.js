@@ -1,44 +1,37 @@
-// Content script for password monitoring and page analysis
+// content.js - Real password monitoring
 console.log('🔒 CyberPet content script loaded');
 
 class PasswordMonitor {
   constructor() {
-    this.weakPasswords = [];
+    this.monitoredFields = new Set();
     this.init();
   }
 
   init() {
-    // Monitor password input fields
     this.monitorPasswordFields();
-    
-    // Check for password fields on page load
     this.checkExistingPasswordFields();
-    
-    // Monitor dynamic content changes
     this.observeDOMChanges();
   }
 
   monitorPasswordFields() {
     document.addEventListener('input', (event) => {
-      if (event.target.type === 'password') {
+      if (event.target.type === 'password' && event.target.value.length > 0) {
         this.analyzePasswordStrength(event.target.value);
       }
     });
 
-    document.addEventListener('submit', (event) => {
-      const passwordFields = document.querySelectorAll('input[type="password"]');
-      passwordFields.forEach(field => {
-        if (field.value) {
-          this.analyzePasswordStrength(field.value);
-        }
-      });
+    document.addEventListener('blur', (event) => {
+      if (event.target.type === 'password' && event.target.value.length > 0) {
+        this.analyzePasswordStrength(event.target.value);
+      }
     });
   }
 
   checkExistingPasswordFields() {
     const passwordFields = document.querySelectorAll('input[type="password"]');
     passwordFields.forEach(field => {
-      if (field.value) {
+      if (field.value && !this.monitoredFields.has(field)) {
+        this.monitoredFields.add(field);
         this.analyzePasswordStrength(field.value);
       }
     });
@@ -48,12 +41,15 @@ class PasswordMonitor {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) { // Element node
+          if (node.nodeType === 1) {
             const passwordFields = node.querySelectorAll ? node.querySelectorAll('input[type="password"]') : [];
             passwordFields.forEach(field => {
-              field.addEventListener('input', (event) => {
-                this.analyzePasswordStrength(event.target.value);
-              });
+              if (!this.monitoredFields.has(field)) {
+                this.monitoredFields.add(field);
+                field.addEventListener('input', (event) => {
+                  this.analyzePasswordStrength(event.target.value);
+                });
+              }
             });
           }
         });
@@ -71,7 +67,7 @@ class PasswordMonitor {
 
     const strength = this.calculatePasswordStrength(password);
     
-    if (strength.strength === 'weak') {
+    if (strength.strength === 'weak' || strength.strength === 'very-weak') {
       this.reportWeakPassword(strength);
     }
   }
@@ -80,7 +76,7 @@ class PasswordMonitor {
     let score = 0;
     let feedback = [];
 
-    // Length check
+    // Length
     if (password.length >= 12) score += 2;
     else if (password.length >= 8) score += 1;
     else feedback.push('Too short');
@@ -112,7 +108,6 @@ class PasswordMonitor {
     return { strength, score, feedback };
   }
 
-  // In content.js - fix the message sending
   reportWeakPassword(strengthInfo) {
     const threat = {
       type: 'weak_password',
@@ -129,8 +124,6 @@ class PasswordMonitor {
       action: 'reportThreat',
       threat: threat
     });
-
-    console.log('🚨 Weak password detected:', strengthInfo);
   }
 }
 
@@ -140,7 +133,7 @@ if (window.location.protocol === 'http:' && !window.location.hostname.includes('
     action: 'reportThreat',
     threat: {
       type: 'insecure_connection',
-      message: `HTTP site: ${window.location.hostname}`,
+      message: `Unencrypted HTTP connection: ${window.location.hostname}`,
       severity: 'warning',
       url: window.location.href,
       timestamp: new Date().toISOString()
